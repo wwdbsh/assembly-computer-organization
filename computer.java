@@ -5,7 +5,6 @@ public class computer {
     private final int OP_INDEX2 = 2;
     private final int OP_INDEX3 = 3;
 
-    
     private memory memory = null; // declares memory
     private bit[] opcode = null; // declares opcode
     private bit halt_bit = null; // declares halt bit
@@ -21,6 +20,8 @@ public class computer {
     public computer() throws Exception{
         this.opcode = new bit[4];
         this.halt_bit = new bit(0); // sets the bit's value to default value (0: not running)
+        this.bit_zero = new bit(0);
+        this.bit_one = new bit(0);
         this.memory = new memory(); // allocates memories
         this.PC = new longword(); this.PC.set(0); // sets program counter to default value (0)
         this.currentInstruction = new longword();
@@ -61,7 +62,7 @@ public class computer {
         this.opcode[2].set(this.currentInstruction.getBit(2).getValue());
         this.opcode[3].set(this.currentInstruction.getBit(3).getValue());
         
-        if(!MOVE() && !HALT() && !INTERRUPT() && !JUMP()){ // ALU instruction
+        if(!MOVE() && !HALT() && !INTERRUPT() && !JUMP()){ // ALU instruction & compare instruction
             int reg_index1 = 0, reg_index2 = 0, factor = 1;
             for(int index = 7; index >= 4; index--){ // sets register index
                 reg_index1 += factor*this.currentInstruction.getBit(index).getValue();
@@ -81,6 +82,9 @@ public class computer {
             generateMove();
         }else if(INTERRUPT()){ // interrupt instruction
             generateInterrupt();
+        }else if(COMPARE()){ // compare instruction
+            compareRegisters();
+            System.out.println(this.bit_zero.toString() + " " + this.bit_one.toString());
         }else if(!JUMP()){ // ALU instruction
             longword value = ALU.doOp(opcode ,this.op1,this.op2); // executes an instruction
             this.result.copy(value); // copies result value
@@ -147,6 +151,21 @@ public class computer {
         this.result.copy(value); // copies result value
     }
 
+    /////////////////////////////////////////////////////////////
+    private void compareRegisters(){ // compares registers by a compare instruction
+        int op1_value = this.op1.getSigned();
+        int op2_value = this.op2.getSigned();
+        if(op1_value >= op2_value){ // greater than or equal 
+            this.bit_zero.set(1); this.bit_one .set(1);
+        }else if(op1_value > op2_value){ // greater than
+            this.bit_zero.set(1); this.bit_one .set(0);
+        }else if(op1_value == op2_value){ // equal
+            this.bit_zero.set(0); this.bit_one .set(1);
+        }else{ // not equal
+            this.bit_zero.set(0); this.bit_one .set(0);
+        }
+    }
+
     private longword convertInstruction(String instructions) throws Exception{ // converts a string instruction to a longword instruction
         int index = 0;
         longword longword = new longword();
@@ -205,6 +224,15 @@ public class computer {
             this.opcode[OP_INDEX1].getValue() == 0 &&
             this.opcode[OP_INDEX2].getValue() == 1 &&
             this.opcode[OP_INDEX3].getValue() == 1
+        );
+    }
+
+    private Boolean COMPARE(){ // checks if an instruction is a compare instruction
+        return ( // 0100
+            this.opcode[OP_INDEX0].getValue() == 0 &&
+            this.opcode[OP_INDEX1].getValue() == 1 &&
+            this.opcode[OP_INDEX2].getValue() == 0 &&
+            this.opcode[OP_INDEX3].getValue() == 0
         );
     }
 }
