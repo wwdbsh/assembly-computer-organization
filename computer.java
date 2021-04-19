@@ -8,20 +8,17 @@ public class computer {
     private memory memory = null; // declares memory
     private bit[] opcode = null; // declares opcode
     private bit halt_bit = null; // declares halt bit
-    private bit bit_zero = null; // declares bit 0 of a result of a compare instruction
-    private bit bit_one = null; // declares bit 1 of a result of a compare instruction
     private longword[] registers = null; // declares registers
     private longword PC = null; // declares program counter
     private longword currentInstruction = null; // declares current instruction
     private longword op1 = null; // declares operand 1
     private longword op2 = null; // declares operand 2
     private longword result = null; // declares result
+    private String compare_result = null; // declares a result of a compare instruction
 
     public computer() throws Exception{
         this.opcode = new bit[4];
         this.halt_bit = new bit(0); // sets the bit's value to default value (0: not running)
-        this.bit_zero = new bit(0);
-        this.bit_one = new bit(0);
         this.memory = new memory(); // allocates memories
         this.PC = new longword(); this.PC.set(0); // sets program counter to default value (0)
         this.currentInstruction = new longword();
@@ -84,7 +81,7 @@ public class computer {
             generateInterrupt();
         }else if(COMPARE()){ // compare instruction
             compareRegisters();
-            System.out.println(this.bit_zero.toString() + " " + this.bit_one.toString());
+            System.out.println(this.compare_result);
         }else if(!JUMP()){ // ALU instruction
             longword value = ALU.doOp(opcode ,this.op1,this.op2); // executes an instruction
             this.result.copy(value); // copies result value
@@ -151,18 +148,14 @@ public class computer {
         this.result.copy(value); // copies result value
     }
 
-    /////////////////////////////////////////////////////////////
-    private void compareRegisters(){ // compares registers by a compare instruction
-        int op1_value = this.op1.getSigned();
-        int op2_value = this.op2.getSigned();
-        if(op1_value >= op2_value){ // greater than or equal 
-            this.bit_zero.set(1); this.bit_one .set(1);
-        }else if(op1_value > op2_value){ // greater than
-            this.bit_zero.set(1); this.bit_one .set(0);
-        }else if(op1_value == op2_value){ // equal
-            this.bit_zero.set(0); this.bit_one .set(1);
-        }else{ // not equal
-            this.bit_zero.set(0); this.bit_one .set(0);
+    private void compareRegisters() throws Exception{ // compares registers by a compare instruction
+        longword longword = rippleAdder.subtract(this.op1, this.op2);
+        if(longword.getSigned() > 0){ // greater than 
+            this.compare_result = "GREATER";
+        }else if(longword.getSigned() == 0){ // equal
+            this.compare_result = "EQUAL";
+        }else{ // less than
+            this.compare_result = "LESS";
         }
     }
 
