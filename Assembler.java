@@ -86,10 +86,13 @@ public class Assembler{
             case "compare": saveOpcode(token); return "0100 0000";
             case "interrupt": saveOpcode(token); return "0010 0000";
             case "halt": saveOpcode(token); return "0000 0000 0000 0000";
-            default: return getRegister(token); // if token is not a command, gets a pattern of register
+            case "branchifequal" : saveOpcode(token); return "0101 11";
+            case "branchifnotequal" : saveOpcode(token); return "0101 10";
+            case "branchifgreaterthan" : saveOpcode(token); return "0101 00";
+            case "branchifgreaterthanorequal" : saveOpcode(token); return "0101 01";
+            default: return getRegister(token); // if token is not a command, gets a pattern of register 
         }
     }
-
     private static String getRegister(String token) throws Exception{
         validateInstruction(); // occurs error when a instruction is unvalid
         switch(token){ // gets bit pattern from register token
@@ -129,7 +132,12 @@ public class Assembler{
             longword = rippleAdder.add(longword, carry);
         }
         String bit_pattern = "";
-        int end_point = command.equals("jump") ? 20 : 24;
+        int end_point = 24;
+        if(command.equals("jump")){
+            end_point = 20;
+        }else if(command.length() > 5 && command.substring(0, 6).equals("branch")){
+            end_point = 22;
+        }
         for(index = 31; index >= end_point; index--){ // assembles the pattern
             bit_pattern = longword.getBit(index).toString() + bit_pattern;
             if(index == 28 || (command.equals("jump") && index == 24)){
@@ -219,9 +227,16 @@ public class Assembler{
             strArr[i] = instruction;
             // System.out.println(strArr[i]);
         }
-        strArr[509] = "jump 1022";
-        strArr[510] = "interrupt 0";
-        strArr[511] = "compare R15 R1";
+        // strArr[509] = "jump 1022";
+        // strArr[510] = "interrupt 0";
+        // strArr[511] = "compare R15 R1";
+        strArr[509] = "compare R15 R1";
+        strArr[510] = "branchifequal -10";
+        // strArr[510] = "branchifnotequal 10";
+        // strArr[510] = "branchifgreaterthan 10";
+        // strArr[510] = "branchifgreaterthanorequal 10";
+        strArr[511] = "interrupt 0";
+
 
         String[] arr = assemble(strArr);
         StringBuilder sb = new StringBuilder();
@@ -235,8 +250,8 @@ public class Assembler{
             }
         }
         System.out.println(sb.toString());
-        computer cpu = new computer();
-        cpu.preload(arr);
-        cpu.run();
+        // computer cpu = new computer();
+        // cpu.preload(arr);
+        // cpu.run();
     }
 }
