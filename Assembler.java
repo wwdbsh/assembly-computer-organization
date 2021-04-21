@@ -244,14 +244,17 @@ public class Assembler{
             strArr[i] = instruction;
             // System.out.println(strArr[i]);
         }
-        strArr[506] = "compare R15 R1";
-        strArr[507] = "branchifequal -1022";
-        strArr[508] = "branchifnotequal 1000";
-        strArr[509] = "branchifgreaterthan 2";
-        strArr[510] = "branchifgreaterthanorequal -250";
-        strArr[511] = "jump 1016";
-
-
+        // strArr[506] = "compare R15 R1";
+        // strArr[507] = "branchifequal -1022";
+        // strArr[508] = "branchifnotequal 1000";
+        // strArr[509] = "branchifgreaterthan 2";
+        // strArr[510] = "branchifgreaterthanorequal -250";
+        // strArr[511] = "jump 1016";
+        strArr[508] = "compare R0 R3";
+        strArr[509] = "branchifequal 2";
+        // strArr[510] = "interrupt 1";
+        strArr[511] = "interrupt 0";
+        
         String[] arr = assemble(strArr);
         StringBuilder sb = new StringBuilder();
         for(int index = 0; index < strArr.length*4; index++){
@@ -264,8 +267,8 @@ public class Assembler{
             }
         }
         System.out.println(sb.toString());
-        // computer cpu = new computer();
-        // cpu.preload(arr);
-        // cpu.run();
+        computer cpu = new computer();
+        cpu.preload(arr);
+        cpu.run();
     }
 }

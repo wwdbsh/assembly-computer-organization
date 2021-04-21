@@ -59,7 +59,7 @@ public class computer {
         this.opcode[2].set(this.currentInstruction.getBit(2).getValue());
         this.opcode[3].set(this.currentInstruction.getBit(3).getValue());
         
-        if(!MOVE() && !HALT() && !INTERRUPT() && !JUMP()){ // ALU instruction & compare instruction
+        if(!MOVE() && !HALT() && !INTERRUPT() && !JUMP() && !BRANCH()){ // ALU instruction & compare instruction
             int reg_index1 = 0, reg_index2 = 0, factor = 1;
             for(int index = 7; index >= 4; index--){ // sets register index
                 reg_index1 += factor*this.currentInstruction.getBit(index).getValue();
@@ -81,27 +81,33 @@ public class computer {
             generateInterrupt();
         }else if(COMPARE()){ // compare instruction
             compareRegisters();
+            System.out.println(this.op1.toString());
+            System.out.println(this.op2.toString());
             System.out.println(this.compare_result);
-        }else if(!JUMP()){ // ALU instruction
+        }else if(!JUMP() && !BRANCH()){ // ALU instruction
             longword value = ALU.doOp(opcode ,this.op1,this.op2); // executes an instruction
             this.result.copy(value); // copies result value
         }
     }
     
-    private void store(){  // store method
-        if(!HALT() && !INTERRUPT() && !JUMP()){ // checks halt bit
+    private void store() throws Exception{  // store method
+        if(!HALT() && !INTERRUPT() && !JUMP() && !BRANCH()){
             int reg_index = 0, start = 0, factor = 1;
             start = MOVE() ? 7 : 15; // move: start => 7, ALU: start => 15
-            for(int index = start; index >= start-3; index--){ // sets store register index
+            for(int index = start; index >= start-3; index--){ // set store register index
                 reg_index += this.currentInstruction.getBit(index).getValue()*factor;
                 factor *= 2;
             }
-            this.registers[reg_index].copy(this.result); // stores value into the register
-        }else if(JUMP()){ // updates PC by a jump instruction
+            this.registers[reg_index].copy(this.result); // store value into the register
+        }else if(JUMP()){ // update PC by a jump instruction
             generateJump();
+        }else if(BRANCH()){ // update PC by a branch instruction
+            if(checkCondition()){
+                generateBranch();
+            }
         }
-        if(this.PC.getSigned()*8 > 1024*8-16){ // sets halt bit to 0 if PC is out of bounds
-            this.halt_bit.set(0); // sets halt bit to 0
+        if(this.PC.getSigned()*8 > 1024*8-16){ // set halt bit to 0 if PC is out of bounds
+            this.halt_bit.set(0); // set halt bit to 0
             System.out.println("HALT: All instructions have been completed");
         }
     }
@@ -110,17 +116,17 @@ public class computer {
         if(instructions.length > 2048){
             throw new Exception("The length of instructions exceeds 2048");
         }
-        longword address = new longword(); address.set(0); // sets memory address
+        longword address = new longword(); address.set(0); // set memory address
         String str_instruction = "";
         int instructions_index = 0;
         do{ // loops until memory is completely filled
-            while(instructions_index < instructions.length){ // loops until every instruction is stored
+            while(instructions_index < instructions.length){ // loop until every instruction is stored
                 str_instruction += instructions[instructions_index++];
                 if(str_instruction.length() == 32) break;
             };
-            longword longword_instruction = convertInstruction(str_instruction); // converts string instruction to longword instruction
-            longword four = new longword(); four.setBit(29, new bit(1)); // creates a longword type variable meaing of 4
-            longword next_address = rippleAdder.add(address, four); // gets next address for reading
+            longword longword_instruction = convertInstruction(str_instruction); // convert string instruction to longword instruction
+            longword four = new longword(); four.setBit(29, new bit(1)); // create a longword type variable meaing of 4
+            longword next_address = rippleAdder.add(address, four); // get next address for reading
             this.memory.write(address, longword_instruction);
             address.copy(next_address);
             str_instruction = "";
@@ -128,7 +134,32 @@ public class computer {
         this.halt_bit.set(1);
     }
 
-    private void generateJump(){ // generates jump
+    private Boolean checkCondition() throws Exception{ // check branch's condition
+        int cc1 = this.currentInstruction.getBit(4).getValue();
+        int cc2 = this.currentInstruction.getBit(5).getValue();
+        if(this.compare_result == null){
+            throw new Exception("There is no result from a compare instruction");
+        }
+        if(cc1 == 1 && cc2 == 1){ // branchifequal
+            return this.compare_result.equals("EQUAL");
+        }
+        if(cc1 == 1 && cc2 == 0){ // branchifnotequal
+            return !this.compare_result.equals("EQUAL");
+        }
+        if(cc1 == 0 && cc2 == 0){ // branchifgreaterthan
+            return this.compare_result.equals("GREATER");
+        }
+        if(cc1 == 0 && cc2 == 1){ // branchifgreaterthanorequal
+            return this.compare_result.equals("GREATER") || this.compare_result.equals("EQUAL");
+        }
+        return false;
+    }
+
+    private void generateBranch(){ // generate branch
+
+    }
+
+    private void generateJump(){ // generate jump
         longword address = new longword(); address.set(0);
         for(int index = 4; index < 16; index++){
             address.setBit(index+16, this.currentInstruction.getBit(index));
@@ -150,12 +181,10 @@ public class computer {
 
     private void compareRegisters() throws Exception{ // compares registers by a compare instruction
         longword longword = rippleAdder.subtract(this.op1, this.op2);
-        if(longword.getSigned() > 0){ // greater than 
-            this.compare_result = "GREATER";
-        }else if(longword.getSigned() == 0){ // equal
+        if(longword.getSigned() == 0){ // equal
             this.compare_result = "EQUAL";
-        }else{ // less than
-            this.compare_result = "LESS";
+        }else{ // greater than 
+            this.compare_result = "GREATER";
         }
     }
 
@@ -226,6 +255,15 @@ public class computer {
             this.opcode[OP_INDEX1].getValue() == 1 &&
             this.opcode[OP_INDEX2].getValue() == 0 &&
             this.opcode[OP_INDEX3].getValue() == 0
+        );
+    }
+
+    private Boolean BRANCH(){ // checks if an instruction is a compare instruction
+        return ( // 0101
+            this.opcode[OP_INDEX0].getValue() == 0 &&
+            this.opcode[OP_INDEX1].getValue() == 1 &&
+            this.opcode[OP_INDEX2].getValue() == 0 &&
+            this.opcode[OP_INDEX3].getValue() == 1
         );
     }
 }
