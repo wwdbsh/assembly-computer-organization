@@ -71,6 +71,9 @@ public class Assembler{
     }
     
     private static String convertTokenToBitPattern(String token) throws Exception{
+        if(token.length() > 5 && token.substring(0, 6).equals("branch")){ // branch
+            saveOpcode(token); return "0101";
+        }
         switch(token){ // gets bit pattern from command token
             case "multiply": saveOpcode(token); return "0111"; 
             case "subtract": saveOpcode(token); return "1111";
@@ -86,10 +89,6 @@ public class Assembler{
             case "compare": saveOpcode(token); return "0100 0000";
             case "interrupt": saveOpcode(token); return "0010 0000";
             case "halt": saveOpcode(token); return "0000 0000 0000 0000";
-            case "branchifequal" : saveOpcode(token); return "0101 11";
-            case "branchifnotequal" : saveOpcode(token); return "0101 10";
-            case "branchifgreaterthan" : saveOpcode(token); return "0101 00";
-            case "branchifgreaterthanorequal" : saveOpcode(token); return "0101 01";
             default: return getRegister(token); // if token is not a command, gets a pattern of register 
         }
     }
@@ -131,20 +130,27 @@ public class Assembler{
             longword = longword.not();
             longword = rippleAdder.add(longword, carry);
         }
-        String bit_pattern = "";
         int end_point = 24;
-        if(command.equals("jump")){
-            end_point = 20;
-        }else if(command.length() > 5 && command.substring(0, 6).equals("branch")){
-            end_point = 22;
+        String bit_pattern = "";
+        String cc = "";
+        switch(command){
+            case "branchifequal": cc = "11"; end_point = 22; break;
+            case "branchifnotequal": cc = "10"; end_point = 22; break;
+            case "branchifgreaterthan": cc = "00"; end_point = 22; break;
+            case "branchifgreaterthanorequal": cc = "01"; end_point = 22; break;
+            case "jump": end_point = 20;
         }
         for(index = 31; index >= end_point; index--){ // assembles the pattern
             bit_pattern = longword.getBit(index).toString() + bit_pattern;
-            if(index == 28 || (command.equals("jump") && index == 24)){
+            if(
+                index == 28 ||
+                (command.equals("jump") && index == 24) ||
+                (command.length() > 5 && command.substring(0, 6).equals("branch") && (index == 24 || index == 20))
+            ){
                 bit_pattern = " " + bit_pattern;
             }
         }
-        return bit_pattern;
+        return cc+bit_pattern;
     }
 
     private static void initializeVariables(){ // method for initializing variables
@@ -196,7 +202,18 @@ public class Assembler{
             throw new Exception(
                 "the decimal \"" +
                 token +
-                "\" value is either out of range (0 ~ 1022) or not an even number"
+                "\" value of " + 
+                "\"jump\" instruction" +
+                " is either out of range (0 ~ 1022) or not an even number"
+            );
+        }
+        if(command != null && command.length() > 5 && command.substring(0, 6).equals("branch") && (Math.abs(number)%2 != 0 || Math.abs(number) > 1022)){ // error handler for when the command is "branch"
+            throw new Exception(
+                "the decimal \"" +
+                token +
+                "\" value of " + 
+                "\"branch\" instruction" +
+                " is either out of range (-1022 ~ 1022) or not an even number"
             );
         }
     }
@@ -227,15 +244,12 @@ public class Assembler{
             strArr[i] = instruction;
             // System.out.println(strArr[i]);
         }
-        // strArr[509] = "jump 1022";
-        // strArr[510] = "interrupt 0";
-        // strArr[511] = "compare R15 R1";
-        strArr[509] = "compare R15 R1";
-        strArr[510] = "branchifequal -10";
-        // strArr[510] = "branchifnotequal 10";
-        // strArr[510] = "branchifgreaterthan 10";
-        // strArr[510] = "branchifgreaterthanorequal 10";
-        strArr[511] = "interrupt 0";
+        strArr[506] = "compare R15 R1";
+        strArr[507] = "branchifequal -1022";
+        strArr[508] = "branchifnotequal 1000";
+        strArr[509] = "branchifgreaterthan 2";
+        strArr[510] = "branchifgreaterthanorequal -250";
+        strArr[511] = "jump 1016";
 
 
         String[] arr = assemble(strArr);
