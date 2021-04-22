@@ -11,4 +11,4 @@ Assembly Computer Organization with Java Programming in ICSI 404
 - ALU
 - memory
 - assembler
-- computer
+- computer: compare, branch

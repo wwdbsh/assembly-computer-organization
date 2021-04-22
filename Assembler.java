@@ -207,13 +207,13 @@ public class Assembler{
                 " is either out of range (0 ~ 1022) or not an even number"
             );
         }
-        if(command != null && command.length() > 5 && command.substring(0, 6).equals("branch") && (Math.abs(number)%2 != 0 || Math.abs(number) > 1022)){ // error handler for when the command is "branch"
+        if(command != null && command.length() > 5 && command.substring(0, 6).equals("branch") && (Math.abs(number)%2 != 0 || number > 510 || number < -512)){ // error handler for when the command is "branch"
             throw new Exception(
                 "the decimal \"" +
                 token +
                 "\" value of " + 
                 "\"branch\" instruction" +
-                " is either out of range (-1022 ~ 1022) or not an even number"
+                " is either out of range (-512 ~ 510) or not an even number"
             );
         }
     }
@@ -244,15 +244,14 @@ public class Assembler{
             strArr[i] = instruction;
             // System.out.println(strArr[i]);
         }
-        // strArr[506] = "compare R15 R1";
-        // strArr[507] = "branchifequal -1022";
-        // strArr[508] = "branchifnotequal 1000";
-        // strArr[509] = "branchifgreaterthan 2";
-        // strArr[510] = "branchifgreaterthanorequal -250";
+        strArr[508] = "compare R0 R0";
         // strArr[511] = "jump 1016";
-        strArr[508] = "compare R0 R3";
+        // strArr[507] = "branchifequal ";
+        // strArr[508] = "branchifnotequal ";
+        // strArr[509] = "branchifgreaterthan ";
+        // strArr[510] = "branchifgreaterthanorequal ";
         strArr[509] = "branchifequal 2";
-        // strArr[510] = "interrupt 1";
+        strArr[510] = "interrupt 1";
         strArr[511] = "interrupt 0";
         
         String[] arr = assemble(strArr);

@@ -60,8 +60,9 @@ public class computer {
         this.opcode[3].set(this.currentInstruction.getBit(3).getValue());
         
         if(!MOVE() && !HALT() && !INTERRUPT() && !JUMP() && !BRANCH()){ // ALU instruction & compare instruction
+            int start = COMPARE() ? 11 : 7;
             int reg_index1 = 0, reg_index2 = 0, factor = 1;
-            for(int index = 7; index >= 4; index--){ // sets register index
+            for(int index = start; index >= start-3; index--){ // sets register index
                 reg_index1 += factor*this.currentInstruction.getBit(index).getValue();
                 reg_index2 += factor*this.currentInstruction.getBit(index+4).getValue();
                 factor *= 2;
@@ -81,9 +82,6 @@ public class computer {
             generateInterrupt();
         }else if(COMPARE()){ // compare instruction
             compareRegisters();
-            System.out.println(this.op1.toString());
-            System.out.println(this.op2.toString());
-            System.out.println(this.compare_result);
         }else if(!JUMP() && !BRANCH()){ // ALU instruction
             longword value = ALU.doOp(opcode ,this.op1,this.op2); // executes an instruction
             this.result.copy(value); // copies result value
@@ -105,6 +103,9 @@ public class computer {
             if(checkCondition()){
                 generateBranch();
             }
+        }
+        if(this.PC.getSigned() < 0 || this.PC.getSigned() > 1024){ // occur an error when PC is negative
+            throw new Exception("The address\"" + this.PC.getSigned() + "\" is out of range (0 ~ 1024)");
         }
         if(this.PC.getSigned()*8 > 1024*8-16){ // set halt bit to 0 if PC is out of bounds
             this.halt_bit.set(0); // set halt bit to 0
@@ -155,10 +156,16 @@ public class computer {
         return false;
     }
 
-    private void generateBranch(){ // generate branch
-
+    private void generateBranch() throws Exception{ // generate branch
+        longword longword = new longword(); longword.set(0);
+        if(this.currentInstruction.getBit(6).getValue() == 1) longword.set(1);
+        for(int index = 7; index < 16; index++){
+            longword.setBit(index+16, this.currentInstruction.getBit(index));
+        }
+        longword next_address = rippleAdder.add(this.PC, longword);
+        this.PC.copy(next_address);
     }
-
+    
     private void generateJump(){ // generate jump
         longword address = new longword(); address.set(0);
         for(int index = 4; index < 16; index++){
@@ -183,7 +190,7 @@ public class computer {
         longword longword = rippleAdder.subtract(this.op1, this.op2);
         if(longword.getSigned() == 0){ // equal
             this.compare_result = "EQUAL";
-        }else{ // greater than 
+        }else if(longword.getSigned() > 0 || longword.getSigned() < 0){ // greater than or less than
             this.compare_result = "GREATER";
         }
     }
