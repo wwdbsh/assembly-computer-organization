@@ -5,24 +5,27 @@ public class computer {
     private final int OP_INDEX2 = 2;
     private final int OP_INDEX3 = 3;
 
-    private memory memory = null; // declares memory
-    private bit[] opcode = null; // declares opcode
-    private bit halt_bit = null; // declares halt bit
-    private longword[] registers = null; // declares registers
-    private longword PC = null; // declares program counter
-    private longword currentInstruction = null; // declares current instruction
-    private longword op1 = null; // declares operand 1
-    private longword op2 = null; // declares operand 2
-    private longword result = null; // declares result
-    private String compare_result = null; // declares a result of a compare instruction
+    private memory memory = null; // declare memory
+    private bit[] opcode = null; // declare opcode
+    private bit halt_bit = null; // declare halt bit
+    private bit bit0 = null; // declare compare bit0
+    private bit bit1 = null; // declare compare bit1
+    private longword[] registers = null; // declare registers
+    private longword PC = null; // declare program counter
+    private longword currentInstruction = null; // declare current instruction
+    private longword op1 = null; // declare operand 1
+    private longword op2 = null; // declare operand 2
+    private longword result = null; // declare result
 
     public computer() throws Exception{
         this.opcode = new bit[4];
-        this.halt_bit = new bit(0); // sets the bit's value to default value (0: not running)
-        this.memory = new memory(); // allocates memories
-        this.PC = new longword(); this.PC.set(0); // sets program counter to default value (0)
+        this.halt_bit = new bit(0); // set the bit's value to default value (0: not running)
+        this.bit0 = new bit(0);
+        this.bit1 = new bit(0);
+        this.memory = new memory(); // allocate memories
+        this.PC = new longword(); this.PC.set(0); // set program counter to default value (0)
         this.currentInstruction = new longword();
-        this.registers = new longword[REG_SIZE]; // initializes registers
+        this.registers = new longword[REG_SIZE]; // initialize registers
         this.op1 = new longword();
         this.op2 = new longword();
         this.result = new longword();
@@ -132,28 +135,40 @@ public class computer {
             address.copy(next_address);
             str_instruction = "";
         }while(address.getSigned()*8 <= 8*1024-32);
-        this.halt_bit.set(1);
+        this.halt_bit.set(1); // set halt bit to 1
     }
 
     private Boolean checkCondition() throws Exception{ // check branch's condition
         int cc1 = this.currentInstruction.getBit(4).getValue();
         int cc2 = this.currentInstruction.getBit(5).getValue();
-        if(this.compare_result == null){
+        if(this.bit0.getValue() == 0 && this.bit1.getValue() == 0){
             throw new Exception("There is no result from a compare instruction");
         }
         if(cc1 == 1 && cc2 == 1){ // branchifequal
-            return this.compare_result.equals("EQUAL");
+            return this.bit0.getValue() == 1 && this.bit1.getValue() == 1;
         }
         if(cc1 == 1 && cc2 == 0){ // branchifnotequal
-            return !this.compare_result.equals("EQUAL");
+            return !(this.bit0.getValue() == 1 && this.bit1.getValue() == 1);
         }
         if(cc1 == 0 && cc2 == 0){ // branchifgreaterthan
-            return this.compare_result.equals("GREATER");
+            return this.bit0.getValue() == 1 && this.bit1.getValue() == 0;
         }
         if(cc1 == 0 && cc2 == 1){ // branchifgreaterthanorequal
-            return this.compare_result.equals("GREATER") || this.compare_result.equals("EQUAL");
+            return (
+                (this.bit0.getValue() == 1 && this.bit1.getValue() == 0) ||
+                (this.bit0.getValue() == 1 && this.bit1.getValue() == 1)
+            );
         }
         return false;
+    }
+    
+    private void compareRegisters() throws Exception{ // compares registers by a compare instruction
+        longword longword = rippleAdder.subtract(this.op1, this.op2);
+        if(longword.getSigned() == 0){ // equal
+            this.bit0.set(1); this.bit1.set(1);
+        }else{ // greater than or less than
+            this.bit0.set(1); this.bit1.set(0);
+        }
     }
 
     private void generateBranch() throws Exception{ // generate branch
@@ -184,15 +199,6 @@ public class computer {
             value.setBit(index+16, this.currentInstruction.getBit(index));
         }
         this.result.copy(value); // copies result value
-    }
-
-    private void compareRegisters() throws Exception{ // compares registers by a compare instruction
-        longword longword = rippleAdder.subtract(this.op1, this.op2);
-        if(longword.getSigned() == 0){ // equal
-            this.compare_result = "EQUAL";
-        }else if(longword.getSigned() > 0 || longword.getSigned() < 0){ // greater than or less than
-            this.compare_result = "GREATER";
-        }
     }
 
     private longword convertInstruction(String instructions) throws Exception{ // converts a string instruction to a longword instruction
