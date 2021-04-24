@@ -134,10 +134,10 @@ public class Assembler{
         String bit_pattern = "";
         String cc = "";
         switch(command){
-            case "branchifequal": cc = "11"; end_point = 22; break;
-            case "branchifnotequal": cc = "10"; end_point = 22; break;
-            case "branchifgreaterthan": cc = "00"; end_point = 22; break;
-            case "branchifgreaterthanorequal": cc = "01"; end_point = 22; break;
+            case "branchIfEqual": cc = "11"; end_point = 22; break;
+            case "branchIfNotEqual": cc = "10"; end_point = 22; break;
+            case "branchIfGreaterThan": cc = "00"; end_point = 22; break;
+            case "branchIfGreaterThanOrEqual": cc = "01"; end_point = 22; break;
             case "jump": end_point = 20;
         }
         for(index = 31; index >= end_point; index--){ // assembles the pattern
@@ -222,52 +222,5 @@ public class Assembler{
         if(command == null){ // error handler for when the instruction has no operation command (operation command => null)
             throw new Exception("\"" + instructions[instruction_index] + "\" is not valid operation");
         }
-    }
-    
-    public static void main(String[] args) throws Exception{
-        String[] strArr = new String[512];
-        
-        String[] cmd = {"multiply","subtract","add","rightShift","leftShift","not","xor","or","and","move","interrupt"};
-        String[] reg = {"R0","R1","R2","R3","R4","R5","R6","R7","R8","R9","R10","R11","R12","R13","R14","R15"};
-        for(int i = 0; i < 512; i++){
-            String instruction = cmd[(int)(Math.random()*cmd.length)];
-            if(instruction.equals("interrupt")){
-                instruction += " " + Integer.toString((int)(Math.random()*2));
-            }else if(instruction.equals("move")){
-                instruction += (" " + reg[(int)(Math.random()*reg.length)]);
-                instruction += (" " + Integer.toString((new Random()).nextInt(128+128)-128));
-            }else{
-                for(int j = 0; j < 3; j++){
-                    instruction += (" " + reg[(int)(Math.random()*reg.length)]);
-                }
-            }
-            strArr[i] = instruction;
-            // System.out.println(strArr[i]);
-        }
-        strArr[508] = "compare R0 R0";
-        // strArr[511] = "jump 1016";
-        // strArr[507] = "branchifequal ";
-        // strArr[508] = "branchifnotequal ";
-        // strArr[509] = "branchifgreaterthan ";
-        // strArr[510] = "branchifgreaterthanorequal ";
-        strArr[509] = "branchifequal 2";
-        strArr[510] = "interrupt 1";
-        strArr[511] = "interrupt 0";
-        
-        String[] arr = assemble(strArr);
-        StringBuilder sb = new StringBuilder();
-        for(int index = 0; index < strArr.length*4; index++){
-            if(index != 0 && index % 4 == 0){
-                sb.append(strArr[index/4-1] + "\n");
-            }
-            sb.append(arr[index] + " ");
-            if(index == strArr.length*4-1){
-                sb.append(strArr[index/4]);
-            }
-        }
-        System.out.println(sb.toString());
-        computer cpu = new computer();
-        cpu.preload(arr);
-        cpu.run();
     }
 }
