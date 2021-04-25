@@ -20,8 +20,8 @@ public class computer {
     public computer() throws Exception{
         this.opcode = new bit[4];
         this.halt_bit = new bit(0); // set the bit's value to default value (0: not running)
-        this.bit0 = new bit(0);
-        this.bit1 = new bit(0);
+        this.bit0 = new bit(1);
+        this.bit1 = new bit(1);
         this.memory = new memory(); // allocate memories
         this.PC = new longword(); this.PC.set(0); // set program counter to default value (0)
         this.currentInstruction = new longword();
@@ -104,6 +104,12 @@ public class computer {
             generateJump();
         }else if(BRANCH()){ // update PC by a branch instruction
             if(checkCondition()){
+                // PC already copied next address. It has to go back to formal address to be applied to branch instruction
+                longword two = new longword(); two.setBit(30, new bit(1)); two = two.not();
+                longword one = new longword(); one.setBit(31, new bit(1));
+                longword minus_two = rippleAdder.add(two, one);
+                longword go_back = rippleAdder.add(this.PC, minus_two); // go back
+                this.PC.copy(go_back);
                 generateBranch();
             }
         }
@@ -141,6 +147,9 @@ public class computer {
     private Boolean checkCondition() throws Exception{ // check branch's condition
         int cc1 = this.currentInstruction.getBit(4).getValue();
         int cc2 = this.currentInstruction.getBit(5).getValue();
+        if(this.bit0.getValue() == 1 && this.bit1.getValue() == 1){
+            throw new Exception("there is no compare result.");
+        }
         if(cc1 == 1 && cc2 == 1){ // branchifequal
             return this.bit1.getValue() == 1;
         }
@@ -156,10 +165,10 @@ public class computer {
         return false;
     }
     
-    private void compareRegisters() throws Exception{ // compares registers by a compare instruction
+    private void compareRegisters() throws Exception{ // compare registers by a compare instruction
         int result = rippleAdder.subtract(this.op1, this.op2).getSigned();
-        if(result > 0){
-            this.bit0.set(1);
+        if(result > 0){ // result (from subtract) is bigger than 0. it means about "compare a b" that "a" is bigger than "b"
+            this.bit0.set(1); // set first bit to 1 because "a" is greater than "b"
         }else{
             this.bit0.set(0);
         };
@@ -223,6 +232,15 @@ public class computer {
             sb.append("MEMORY: " + this.memory.toString());
         }
         System.out.println(sb.toString());
+    }
+
+    protected int[] getCompareBitValue(){
+        int[] result = {this.bit0.getValue(), this.bit1.getValue()};
+        return result;
+    }
+
+    protected int getResiterValue(int index){
+        return this.registers[index].getSigned();
     }
 
     private Boolean HALT(){ // checks if an instruction is a halt instruction
