@@ -141,34 +141,33 @@ public class computer {
     private Boolean checkCondition() throws Exception{ // check branch's condition
         int cc1 = this.currentInstruction.getBit(4).getValue();
         int cc2 = this.currentInstruction.getBit(5).getValue();
-        if(this.bit0.getValue() == 0 && this.bit1.getValue() == 0){
-            throw new Exception("There is no result from a compare instruction");
-        }
         if(cc1 == 1 && cc2 == 1){ // branchifequal
-            return this.bit0.getValue() == 1 && this.bit1.getValue() == 1;
+            return this.bit1.getValue() == 1;
         }
         if(cc1 == 1 && cc2 == 0){ // branchifnotequal
-            return !(this.bit0.getValue() == 1 && this.bit1.getValue() == 1);
+            return this.bit1.getValue() == 0;
         }
         if(cc1 == 0 && cc2 == 0){ // branchifgreaterthan
             return this.bit0.getValue() == 1 && this.bit1.getValue() == 0;
         }
         if(cc1 == 0 && cc2 == 1){ // branchifgreaterthanorequal
-            return (
-                (this.bit0.getValue() == 1 && this.bit1.getValue() == 0) ||
-                (this.bit0.getValue() == 1 && this.bit1.getValue() == 1)
-            );
+            return this.bit0.getValue() == 1 || this.bit1.getValue() == 1;
         }
         return false;
     }
     
     private void compareRegisters() throws Exception{ // compares registers by a compare instruction
-        longword longword = rippleAdder.subtract(this.op1, this.op2);
-        if(longword.getSigned() == 0){ // equal
-            this.bit0.set(1); this.bit1.set(1);
-        }else{ // greater than or less than
-            this.bit0.set(1); this.bit1.set(0);
-        }
+        int result = rippleAdder.subtract(this.op1, this.op2).getSigned();
+        if(result > 0){
+            this.bit0.set(1);
+        }else{
+            this.bit0.set(0);
+        };
+        if(result != 0){
+            this.bit1.set(0);
+        }else{
+            this.bit1.set(1);
+        };
     }
 
     private void generateBranch() throws Exception{ // generate branch
