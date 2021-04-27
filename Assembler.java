@@ -1,5 +1,3 @@
-import java.util.*;
-
 public class Assembler{
     private static final String ZEROS = "0000"; // variable for initializing bit patterns
     private static final int SIZE = 2048; // size of string array that will be returned from assemble method 
