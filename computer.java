@@ -18,7 +18,9 @@ public class computer {
     private longword result = null; // declare result
     private longword SP = null; // declare stack pointer
     private longword positive_four = null; // declare positive four
-    private longword negative_four = null; // declare negative four
+    private longword positive_three = null; // declare positive three;
+    private longword positive_two = null; // declare positive two
+    private longword carry = null; // declare carry
 
     public computer() throws Exception{
         this.opcode = new bit[4];
@@ -34,18 +36,12 @@ public class computer {
         this.result = new longword();
         for(int index = 0; index < 4; index++) this.opcode[index] = new bit();
         for(int index = 0; index < REG_SIZE; index++) this.registers[index] = new longword(); // allocates memory to each register
-        /********************************************/
-        longword carry = new longword(); carry.setBit(31, new bit(1));
-        longword negative_three = new longword();
-        negative_three.setBit(31, new bit(1));
-        negative_three.setBit(30, new bit(1));
-        negative_three = negative_three.not();
-        negative_three = rippleAdder.add(negative_three, carry);
-        this.positive_four = new longword(); positive_four.setBit(29, new bit(1));
-        this.negative_four = rippleAdder.add(this.positive_four.not(), carry);
-        /********************************************/
-        this.SP = new longword(); this.SP.set(1);
-        this.SP = this.SP.rightShift(22); this.SP = rippleAdder.add(this.SP, negative_three);
+        this.carry = new longword(); carry.setBit(31, new bit(1));
+        this.positive_four = new longword(); this.positive_four.setBit(29, new bit(1));
+        this.positive_three = new longword(); this.positive_three.setBit(31, new bit(1)); this.positive_three.setBit(30, new bit(1));
+        this.positive_two = new longword(); this.positive_two.setBit(30, new bit(1));
+        this.SP = new longword(); this.SP.set(1); this.SP = this.SP.rightShift(22);
+        this.SP = rippleAdder.add(this.SP, rippleAdder.add(this.positive_three.not(), this.carry));
     }
 
     public void run() throws Exception{ // run method
@@ -64,8 +60,7 @@ public class computer {
 
     private void fetch() throws Exception{ // fetch method
         longword instruction = this.memory.read(this.PC); // reads the current instruction
-        longword two = new longword(); two.setBit(30, new bit(1)); // creates a longword type variable meaing of 2
-        longword next_address = rippleAdder.add(this.PC, two); // gets next address for reading
+        longword next_address = rippleAdder.add(this.PC, this.positive_two); // gets next address for reading
         this.currentInstruction.copy(instruction); // copies the instruction to currentInstruction
         this.PC.copy(next_address); // copies the next address to program counter
     } 
@@ -120,17 +115,14 @@ public class computer {
         }else if(BRANCH()){ // update PC by a branch instruction
             if(checkCondition()){
                 // PC already copied next address. It has to go back to formal address to be applied to branch instruction
-                longword two = new longword(); two.setBit(30, new bit(1)); two = two.not();
-                longword one = new longword(); one.setBit(31, new bit(1));
-                longword minus_two = rippleAdder.add(two, one);
-                longword go_back = rippleAdder.add(this.PC, minus_two); // go back
+                longword go_back = rippleAdder.add(this.PC, rippleAdder.add(this.positive_two.not(), this.carry)); // go back
                 this.PC.copy(go_back);
                 generateBranch();
             }
         }
-        if(this.PC.getSigned() < 0 || this.PC.getSigned() > 1024){ // occur an error when PC is negative
-            throw new Exception("The address\"" + this.PC.getSigned() + "\" is out of range (0 ~ 1024)");
-        }
+        // if(this.PC.getSigned() < 0 || this.PC.getSigned() > 1024){ // occur an error when PC is negative
+        //     throw new Exception("The address\"" + this.PC.getSigned() + "\" is out of range (0 ~ 1024)");
+        // }
         if(this.PC.getSigned()*8 > 1024*8-16){ // set halt bit to 0 if PC is out of bounds
             this.halt_bit.set(0); // set halt bit to 0
             System.out.println("HALT: All instructions have been completed");
@@ -150,8 +142,7 @@ public class computer {
                 if(str_instruction.length() == 32) break;
             };
             longword longword_instruction = convertInstruction(str_instruction); // convert string instruction to longword instruction
-            longword four = new longword(); four.setBit(29, new bit(1)); // create a longword type variable meaing of 4
-            longword next_address = rippleAdder.add(address, four); // get next address for reading
+            longword next_address = rippleAdder.add(address, this.positive_four); // get next address for reading
             this.memory.write(address, longword_instruction);
             address.copy(next_address);
             str_instruction = "";
@@ -217,7 +208,7 @@ public class computer {
 
     private void generateMove(){ // generates move
         longword value = new longword();
-        switch(this.currentInstruction.getBit(8).getValue()){  // checks if value is negative
+        switch(this.currentInstruction.getBit(8).getValue()){  // check if value is negative
             case 1: value.set(1); break; // negative
             default: value.set(0); // positive
         }
@@ -261,7 +252,7 @@ public class computer {
         return this.registers[index].getSigned();
     }
 
-    private Boolean HALT(){ // checks if an instruction is a halt instruction
+    private Boolean HALT(){ // check if an instruction is a halt instruction
         return ( // 0000
             this.opcode[OP_INDEX0].getValue() == 0 &&
             this.opcode[OP_INDEX1].getValue() == 0 &&
@@ -270,7 +261,7 @@ public class computer {
         );
     }
 
-    private Boolean MOVE(){ // checks if an instruction is a move instruction
+    private Boolean MOVE(){ // check if an instruction is a move instruction
         return ( // 0001
             this.opcode[OP_INDEX0].getValue() == 0 &&
             this.opcode[OP_INDEX1].getValue() == 0 &&
@@ -288,7 +279,7 @@ public class computer {
         );
     }
 
-    private Boolean JUMP(){ // checks if an instruction is a jump instruction
+    private Boolean JUMP(){ // check if an instruction is a jump instruction
         return ( // 0011
             this.opcode[OP_INDEX0].getValue() == 0 &&
             this.opcode[OP_INDEX1].getValue() == 0 &&
@@ -297,7 +288,7 @@ public class computer {
         );
     }
 
-    private Boolean COMPARE(){ // checks if an instruction is a compare instruction
+    private Boolean COMPARE(){ // check if an instruction is a compare instruction
         return ( // 0100
             this.opcode[OP_INDEX0].getValue() == 0 &&
             this.opcode[OP_INDEX1].getValue() == 1 &&
@@ -306,12 +297,21 @@ public class computer {
         );
     }
 
-    private Boolean BRANCH(){ // checks if an instruction is a compare instruction
+    private Boolean BRANCH(){ // check if an instruction is a compare instruction
         return ( // 0101
             this.opcode[OP_INDEX0].getValue() == 0 &&
             this.opcode[OP_INDEX1].getValue() == 1 &&
             this.opcode[OP_INDEX2].getValue() == 0 &&
             this.opcode[OP_INDEX3].getValue() == 1
+        );
+    }
+
+    private Boolean STACK(){ // check if an instruction is a stack instruction
+        return ( // 0110
+            this.opcode[OP_INDEX0].getValue() == 0 &&
+            this.opcode[OP_INDEX1].getValue() == 1 &&
+            this.opcode[OP_INDEX2].getValue() == 1 &&
+            this.opcode[OP_INDEX3].getValue() == 0
         );
     }
 }

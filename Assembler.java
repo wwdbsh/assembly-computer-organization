@@ -1,3 +1,5 @@
+import java.util.*;
+
 public class Assembler{
     private static final String ZEROS = "0000"; // variable for initializing bit patterns
     private static final int SIZE = 2048; // size of string array that will be returned from assemble method 
@@ -148,7 +150,7 @@ public class Assembler{
             if(
                 index == 28 ||
                 (command.equals("jump") && index == 24) ||
-                (((command.length() > 5 && command.substring(0, 6).equals("branch")) || command.equals("call")) && (index == 24 || index == 20))
+                ((command.length() > 5 && command.substring(0, 6).equals("branch")) && index == 24)
             ){
                 bit_pattern = " " + bit_pattern;
             }
@@ -238,38 +240,39 @@ public class Assembler{
 
     public static void main(String[] args) throws Exception{
         String[] strArr = new String[512];
-        for(int i = 0; i < 512; i++){
-            strArr[i] = "halt";
-        }
-        // String[] cmd = {"multiply","subtract","add","rightShift","leftShift","not","xor","or","and","move","interrupt"};
-        // String[] reg = {"R0","R1","R2","R3","R4","R5","R6","R7","R8","R9","R10","R11","R12","R13","R14","R15"};
         // for(int i = 0; i < 512; i++){
-        //     String instruction = cmd[(int)(Math.random()*cmd.length)];
-        //     if(instruction.equals("interrupt")){
-        //         instruction += " " + Integer.toString((int)(Math.random()*2));
-        //     }else if(instruction.equals("move")){
-        //         instruction += (" " + reg[(int)(Math.random()*reg.length)]);
-        //         instruction += (" " + Integer.toString((new Random()).nextInt(128+128)-128));
-        //     }else{
-        //         for(int j = 0; j < 3; j++){
-        //             instruction += (" " + reg[(int)(Math.random()*reg.length)]);
-        //         }
-        //     }
-        //     strArr[i] = instruction;
-        //     // System.out.println(strArr[i]);
+        //     strArr[i] = "halt";
         // }
-        // strArr[506] = "compare R15 R1";
-        // strArr[507] = "branchifequal 2";
-        // strArr[508] = "branchifnotequal -10";
-        // strArr[509] = "branchifgreaterthan 4";
-        // strArr[510] = "branchifgreaterthanorequal -200";
-        // strArr[511] = "jump 10";
+        String[] cmd = {"multiply","subtract","add","rightShift","leftShift","not","xor","or","and","move"};
+        // String[] cmd = {"multiply","subtract","add","rightShift","leftShift","not","xor","or","and","move","interrupt"};
+        String[] reg = {"R0","R1","R2","R3","R4","R5","R6","R7","R8","R9","R10","R11","R12","R13","R14","R15"};
+        for(int i = 0; i < 512; i++){
+            String instruction = cmd[(int)(Math.random()*cmd.length)];
+            if(instruction.equals("interrupt")){
+                instruction += " " + Integer.toString((int)(Math.random()*2));
+            }else if(instruction.equals("move")){
+                instruction += (" " + reg[(int)(Math.random()*reg.length)]);
+                instruction += (" " + Integer.toString((new Random()).nextInt(128+128)-128));
+            }else{
+                for(int j = 0; j < 3; j++){
+                    instruction += (" " + reg[(int)(Math.random()*reg.length)]);
+                }
+            }
+            strArr[i] = instruction;
+            // System.out.println(strArr[i]);
+        }
+        strArr[505] = "compare R15 R1";
+        strArr[506] = "branchIfEqual 2";
+        strArr[507] = "branchIfNotEqual 2";
+        strArr[508] = "branchIfGreaterThan 2";
+        strArr[509] = "branchIfGreaterThanOrEqual 2";
+        strArr[510] = "jump 1022";
 
-        strArr[507] = "push R1";
-        strArr[508] = "pop R2";
-        strArr[509] = "call 10";
-        strArr[510] = "return";
-        strArr[511] = "halt";
+        // strArr[507] = "push R1";
+        // strArr[508] = "pop R2";
+        // strArr[509] = "call 10";
+        // strArr[510] = "return";
+        // strArr[511] = "halt";
 
         String[] arr = assemble(strArr);
         StringBuilder sb = new StringBuilder();
@@ -283,8 +286,9 @@ public class Assembler{
             }
         }
         System.out.println(sb.toString());
-        // computer cpu = new computer();
-        // cpu.preload(arr);
-        // cpu.run();
+        computer cpu = new computer();
+        cpu.preload(arr);
+        cpu.run();
     }
 }
+
