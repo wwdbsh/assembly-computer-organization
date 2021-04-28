@@ -34,29 +34,18 @@ public class computer {
         this.result = new longword();
         for(int index = 0; index < 4; index++) this.opcode[index] = new bit();
         for(int index = 0; index < REG_SIZE; index++) this.registers[index] = new longword(); // allocates memory to each register
-        
         /********************************************/
+        longword carry = new longword(); carry.setBit(31, new bit(1));
         longword negative_three = new longword();
         negative_three.setBit(31, new bit(1));
         negative_three.setBit(30, new bit(1));
         negative_three = negative_three.not();
-        longword carry = new longword();
-        carry.setBit(31, new bit(1));
         negative_three = rippleAdder.add(negative_three, carry);
-        this.positive_four = new longword();
-        positive_four.setBit(29, new bit(1));
+        this.positive_four = new longword(); positive_four.setBit(29, new bit(1));
         this.negative_four = rippleAdder.add(this.positive_four.not(), carry);
         /********************************************/
         this.SP = new longword(); this.SP.set(1);
         this.SP = this.SP.rightShift(22); this.SP = rippleAdder.add(this.SP, negative_three);
-        System.out.println(this.SP.toString());
-        System.out.println(this.SP.getSigned());
-        System.out.println(this.positive_four.getSigned());
-        System.out.println(this.negative_four.getSigned());
-    }
-
-    public static void main(String[] args) throws Exception{
-        computer cpu = new computer();
     }
 
     public void run() throws Exception{ // run method

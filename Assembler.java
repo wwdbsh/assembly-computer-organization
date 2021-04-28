@@ -84,9 +84,13 @@ public class Assembler{
             case "and": saveOpcode(token); return "1000";
             case "move": saveOpcode(token); return "0001";
             case "jump": saveOpcode(token); return "0011";
+            case "call": saveOpcode(token); return "0110";
             case "compare": saveOpcode(token); return "0100 0000";
             case "interrupt": saveOpcode(token); return "0010 0000";
+            case "push": saveOpcode(token); return "0110 0000 0000";
+            case "pop": saveOpcode(token); return "0110 0100 0000";
             case "halt": saveOpcode(token); return "0000 0000 0000 0000";
+            case "return": saveOpcode(token); return "0110 1100 0000 0000";
             default: return getRegister(token); // if token is not a command, gets a pattern of register 
         }
     }
@@ -136,6 +140,7 @@ public class Assembler{
             case "branchIfNotEqual": cc = "10"; end_point = 22; break;
             case "branchIfGreaterThan": cc = "00"; end_point = 22; break;
             case "branchIfGreaterThanOrEqual": cc = "01"; end_point = 22; break;
+            case "call": cc = "01"; end_point = 22; break;
             case "jump": end_point = 20;
         }
         for(index = 31; index >= end_point; index--){ // assembles the pattern
@@ -143,7 +148,7 @@ public class Assembler{
             if(
                 index == 28 ||
                 (command.equals("jump") && index == 24) ||
-                (command.length() > 5 && command.substring(0, 6).equals("branch") && (index == 24 || index == 20))
+                (((command.length() > 5 && command.substring(0, 6).equals("branch")) || command.equals("call")) && (index == 24 || index == 20))
             ){
                 bit_pattern = " " + bit_pattern;
             }
@@ -205,6 +210,15 @@ public class Assembler{
                 " is either out of range (0 ~ 1022) or not an even number"
             );
         }
+        if(command != null && command.equals("call") && (number%2 != 0 || number < 0 || number > 1020)){ // error handler for when the command is "call"
+            throw new Exception(
+                "the decimal \"" +
+                token +
+                "\" value of " + 
+                "\"call\" instruction" +
+                " is either out of range (0 ~ 1020) or not an even number"
+            );
+        }
         if(command != null && command.length() > 5 && command.substring(0, 6).equals("branch") && (Math.abs(number)%2 != 0 || number > 510 || number < -512)){ // error handler for when the command is "branch"
             throw new Exception(
                 "the decimal \"" +
@@ -220,5 +234,57 @@ public class Assembler{
         if(command == null){ // error handler for when the instruction has no operation command (operation command => null)
             throw new Exception("\"" + instructions[instruction_index] + "\" is not valid operation");
         }
+    }
+
+    public static void main(String[] args) throws Exception{
+        String[] strArr = new String[512];
+        for(int i = 0; i < 512; i++){
+            strArr[i] = "halt";
+        }
+        // String[] cmd = {"multiply","subtract","add","rightShift","leftShift","not","xor","or","and","move","interrupt"};
+        // String[] reg = {"R0","R1","R2","R3","R4","R5","R6","R7","R8","R9","R10","R11","R12","R13","R14","R15"};
+        // for(int i = 0; i < 512; i++){
+        //     String instruction = cmd[(int)(Math.random()*cmd.length)];
+        //     if(instruction.equals("interrupt")){
+        //         instruction += " " + Integer.toString((int)(Math.random()*2));
+        //     }else if(instruction.equals("move")){
+        //         instruction += (" " + reg[(int)(Math.random()*reg.length)]);
+        //         instruction += (" " + Integer.toString((new Random()).nextInt(128+128)-128));
+        //     }else{
+        //         for(int j = 0; j < 3; j++){
+        //             instruction += (" " + reg[(int)(Math.random()*reg.length)]);
+        //         }
+        //     }
+        //     strArr[i] = instruction;
+        //     // System.out.println(strArr[i]);
+        // }
+        // strArr[506] = "compare R15 R1";
+        // strArr[507] = "branchifequal 2";
+        // strArr[508] = "branchifnotequal -10";
+        // strArr[509] = "branchifgreaterthan 4";
+        // strArr[510] = "branchifgreaterthanorequal -200";
+        // strArr[511] = "jump 10";
+
+        strArr[507] = "push R1";
+        strArr[508] = "pop R2";
+        strArr[509] = "call 10";
+        strArr[510] = "return";
+        strArr[511] = "halt";
+
+        String[] arr = assemble(strArr);
+        StringBuilder sb = new StringBuilder();
+        for(int index = 0; index < strArr.length*4; index++){
+            if(index != 0 && index % 4 == 0){
+                sb.append(strArr[index/4-1] + "\n");
+            }
+            sb.append(arr[index] + " ");
+            if(index == strArr.length*4-1){
+                sb.append(strArr[index/4]);
+            }
+        }
+        System.out.println(sb.toString());
+        // computer cpu = new computer();
+        // cpu.preload(arr);
+        // cpu.run();
     }
 }
