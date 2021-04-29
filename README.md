@@ -11,4 +11,11 @@ Assembly Computer Organization with Java Programming in ICSI 404
 - ALU
 - memory
 - assembler
-- computer: jump, compare, branchIfEqual, branchIfNotEqual, branchIfGreaterThan, branchIfGreaterThanOrEqual, stack(push, pop, call, return)
+- computer
+    - jump
+    - compare
+    - branchIfEqual
+    - branchIfNotEqual 
+    - branchIfGreaterThan
+    - branchIfGreaterThanOrEqual
+    - stack(push, pop, call, return)

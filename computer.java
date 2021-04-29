@@ -41,7 +41,7 @@ public class computer {
         this.positive_three = new longword(); this.positive_three.setBit(31, new bit(1)); this.positive_three.setBit(30, new bit(1));
         this.positive_two = new longword(); this.positive_two.setBit(30, new bit(1));
         this.SP = new longword(); this.SP.set(1); this.SP = this.SP.rightShift(22);
-        this.SP = rippleAdder.add(this.SP, rippleAdder.add(this.positive_three.not(), this.carry));
+        this.SP.copy(rippleAdder.add(this.SP, rippleAdder.add(this.positive_three.not(), this.carry)));
     }
 
     public void run() throws Exception{ // run method
@@ -72,15 +72,15 @@ public class computer {
         this.opcode[2].set(this.currentInstruction.getBit(2).getValue());
         this.opcode[3].set(this.currentInstruction.getBit(3).getValue());
         
-        if(!MOVE() && !HALT() && !INTERRUPT() && !JUMP() && !BRANCH()){ // ALU instruction & compare instruction
+        if(!MOVE() && !HALT() && !INTERRUPT() && !JUMP() && !BRANCH() && !STACK()){ // ALU instruction & compare instruction
             int start = COMPARE() ? 11 : 7;
             int reg_index1 = 0, reg_index2 = 0, factor = 1;
-            for(int index = start; index >= start-3; index--){ // sets register index
+            for(int index = start; index >= start-3; index--){ // set register index
                 reg_index1 += factor*this.currentInstruction.getBit(index).getValue();
                 reg_index2 += factor*this.currentInstruction.getBit(index+4).getValue();
                 factor *= 2;
             }
-            this.op1.copy(this.registers[reg_index1]); // copies data from a register.
+            this.op1.copy(this.registers[reg_index1]); // copie data from a register.
             this.op2.copy(this.registers[reg_index2]);
         }
     }
@@ -95,7 +95,7 @@ public class computer {
             generateInterrupt();
         }else if(COMPARE()){ // compare instruction
             compareRegisters();
-        }else if(!JUMP() && !BRANCH()){ // ALU instruction
+        }else if(!JUMP() && !BRANCH() && !STACK()){ // ALU instruction
             longword value = ALU.doOp(opcode ,this.op1,this.op2); // executes an instruction
             this.result.copy(value); // copies result value
         }
@@ -119,6 +119,8 @@ public class computer {
                 this.PC.copy(go_back);
                 generateBranch();
             }
+        }else if(STACK()){ // update SP or update PC by SP
+            generateStackOperation();
         }
         // if(this.PC.getSigned() < 0 || this.PC.getSigned() > 1024){ // occur an error when PC is negative
         //     throw new Exception("The address\"" + this.PC.getSigned() + "\" is out of range (0 ~ 1024)");
@@ -148,6 +150,26 @@ public class computer {
             str_instruction = "";
         }while(address.getSigned()*8 <= 8*1024-32);
         this.halt_bit.set(1); // set halt bit to 1
+    }
+
+    private void generateStackOperation() throws Exception{
+        String op =
+         this.currentInstruction.getBit(4).toString() +
+         this.currentInstruction.getBit(5).toString();
+        switch(op){
+            case "00": // push
+                this.SP.copy(rippleAdder.add(this.SP, rippleAdder.add(this.positive_four.not(), this.carry)));
+                break;
+            case "01": // pop
+                this.SP.copy(rippleAdder.add(this.SP, this.positive_four));
+                break;
+            case "10": // call
+                break;
+            default: // return (11)
+                this.PC.copy(this.SP);
+                this.SP.copy(rippleAdder.add(this.SP, this.positive_four));
+
+        }
     }
 
     private Boolean checkCondition() throws Exception{ // check branch's condition

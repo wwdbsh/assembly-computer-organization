@@ -142,7 +142,7 @@ public class Assembler{
             case "branchIfNotEqual": cc = "10"; end_point = 22; break;
             case "branchIfGreaterThan": cc = "00"; end_point = 22; break;
             case "branchIfGreaterThanOrEqual": cc = "01"; end_point = 22; break;
-            case "call": cc = "01"; end_point = 22; break;
+            case "call": cc = "10"; end_point = 22; break;
             case "jump": end_point = 20;
         }
         for(index = 31; index >= end_point; index--){ // assembles the pattern
@@ -150,7 +150,7 @@ public class Assembler{
             if(
                 index == 28 ||
                 (command.equals("jump") && index == 24) ||
-                ((command.length() > 5 && command.substring(0, 6).equals("branch")) && index == 24)
+                (((command.length() > 5 && command.substring(0, 6).equals("branch")) || command.equals("call")) && index == 24)
             ){
                 bit_pattern = " " + bit_pattern;
             }
@@ -261,18 +261,18 @@ public class Assembler{
             strArr[i] = instruction;
             // System.out.println(strArr[i]);
         }
-        strArr[505] = "compare R15 R1";
-        strArr[506] = "branchIfEqual 2";
-        strArr[507] = "branchIfNotEqual 2";
-        strArr[508] = "branchIfGreaterThan 2";
-        strArr[509] = "branchIfGreaterThanOrEqual 2";
-        strArr[510] = "jump 1022";
+        // strArr[505] = "compare R15 R1";
+        // strArr[506] = "branchIfEqual 2";
+        // strArr[507] = "branchIfNotEqual 2";
+        // strArr[508] = "branchIfGreaterThan 2";
+        // strArr[509] = "branchIfGreaterThanOrEqual 2";
+        // strArr[510] = "jump 1022";
 
-        // strArr[507] = "push R1";
-        // strArr[508] = "pop R2";
-        // strArr[509] = "call 10";
-        // strArr[510] = "return";
-        // strArr[511] = "halt";
+        strArr[507] = "push R1";
+        strArr[508] = "pop R2";
+        strArr[509] = "call 10";
+        strArr[510] = "return";
+        strArr[511] = "halt";
 
         String[] arr = assemble(strArr);
         StringBuilder sb = new StringBuilder();
@@ -286,9 +286,9 @@ public class Assembler{
             }
         }
         System.out.println(sb.toString());
-        computer cpu = new computer();
-        cpu.preload(arr);
-        cpu.run();
+        // computer cpu = new computer();
+        // cpu.preload(arr);
+        // cpu.run();
     }
 }
 
