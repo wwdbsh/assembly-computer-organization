@@ -268,10 +268,17 @@ public class Assembler{
         // strArr[509] = "branchIfGreaterThanOrEqual 2";
         // strArr[510] = "jump 1022";
 
-        strArr[507] = "push R1";
-        strArr[508] = "pop R2";
-        strArr[509] = "call 10";
-        strArr[510] = "return";
+        // strArr[507] = "push R1";
+        // strArr[508] = "pop R2";
+        // strArr[509] = "call 10";
+        // strArr[510] = "return";
+        // strArr[511] = "halt";
+
+        strArr[500] = "move R15 -1";
+        strArr[501] = "push R15";
+        strArr[502] = "pop R15";
+        strArr[503] = "interrupt 1";
+        strArr[504] = "interrupt 0";
         strArr[511] = "halt";
 
         String[] arr = assemble(strArr);
@@ -286,9 +293,9 @@ public class Assembler{
             }
         }
         System.out.println(sb.toString());
-        // computer cpu = new computer();
-        // cpu.preload(arr);
-        // cpu.run();
+        computer cpu = new computer();
+        cpu.preload(arr);
+        cpu.run();
     }
 }
 

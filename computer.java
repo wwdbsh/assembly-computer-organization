@@ -102,7 +102,7 @@ public class computer {
     }
     
     private void store() throws Exception{  // store method
-        if(!HALT() && !INTERRUPT() && !JUMP() && !BRANCH()){
+        if(!HALT() && !INTERRUPT() && !JUMP() && !BRANCH() && !STACK()){
             int reg_index = 0, start = 0, factor = 1;
             start = MOVE() ? 7 : 15; // move: start => 7, ALU: start => 15
             for(int index = start; index >= start-3; index--){ // set store register index
@@ -127,7 +127,7 @@ public class computer {
         // }
         if(this.PC.getSigned()*8 > 1024*8-16){ // set halt bit to 0 if PC is out of bounds
             this.halt_bit.set(0); // set halt bit to 0
-            System.out.println("HALT: All instructions have been completed");
+            System.out.println("All instructions have been completed");
         }
     }
 
@@ -158,18 +158,36 @@ public class computer {
          this.currentInstruction.getBit(5).toString();
         switch(op){
             case "00": // push
-                this.SP.copy(rippleAdder.add(this.SP, rippleAdder.add(this.positive_four.not(), this.carry)));
+                int reg_index1 = getResisterIndex();
+                this.memory.write(this.SP, this.registers[reg_index1]); // register => stack
+                this.SP.copy(rippleAdder.add(this.SP, rippleAdder.add(this.positive_four.not(), this.carry))); // stack pointer -= 4
                 break;
             case "01": // pop
-                this.SP.copy(rippleAdder.add(this.SP, this.positive_four));
+                int reg_index2 = getResisterIndex();
+                this.SP.copy(rippleAdder.add(this.SP, this.positive_four)); // stack pointer += 4
+                this.registers[reg_index2].copy(this.memory.read(this.SP)); // stack => register
                 break;
             case "10": // call
+                longword called_address = new longword(); called_address.set(0);
+                for(int index = 6; index < 16; index++){
+                    called_address.setBit(index+16, this.currentInstruction.getBit(index));
+                }
+                this.SP.copy(called_address); // move SP to called address
+                this.memory.write(this.SP, this.memory.read(this.PC)); // next instruction => stack
                 break;
             default: // return (11)
-                this.PC.copy(this.SP);
-                this.SP.copy(rippleAdder.add(this.SP, this.positive_four));
-
+                this.SP.copy(rippleAdder.add(this.SP, this.positive_four)); // stack pointer += 4
+                this.PC.copy(this.SP); // move PC to SP
         }
+    }
+
+    private int getResisterIndex(){
+        int reg_index = 0, factor = 1;
+        for(int index = 15; index >= 12; index--){ // set register index
+            reg_index += factor*this.currentInstruction.getBit(index).getValue();
+            factor *= 2;
+        }
+        return reg_index;
     }
 
     private Boolean checkCondition() throws Exception{ // check branch's condition
