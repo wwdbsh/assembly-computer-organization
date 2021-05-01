@@ -125,6 +125,9 @@ public class computer {
         // if(this.PC.getSigned() < 0 || this.PC.getSigned() > 1024){ // occur an error when PC is negative
         //     throw new Exception("The address\"" + this.PC.getSigned() + "\" is out of range (0 ~ 1024)");
         // }
+        if(this.PC.getSigned() < 0){ // occur an error when PC is negative
+            throw new Exception("The address\"" + this.PC.getSigned() + "\" is out of range (0 ~ 1024)");
+        }
         if(this.PC.getSigned()*8 > 1024*8-16){ // set halt bit to 0 if PC is out of bounds
             this.halt_bit.set(0); // set halt bit to 0
             System.out.println("All instructions have been completed");
@@ -152,7 +155,7 @@ public class computer {
         this.halt_bit.set(1); // set halt bit to 1
     }
 
-    private void generateStackOperation() throws Exception{
+    private void generateStackOperation() throws Exception{ // generate stack operations
         String op =
          this.currentInstruction.getBit(4).toString() +
          this.currentInstruction.getBit(5).toString();
@@ -176,12 +179,12 @@ public class computer {
                 this.memory.write(this.SP, this.memory.read(this.PC)); // next instruction => stack
                 break;
             default: // return (11)
-                this.SP.copy(rippleAdder.add(this.SP, this.positive_four)); // stack pointer += 4
                 this.PC.copy(this.SP); // move PC to SP
+                this.SP.copy(rippleAdder.add(this.SP, this.positive_four)); // stack pointer += 4
         }
     }
 
-    private int getResisterIndex(){
+    private int getResisterIndex(){ // get register's index
         int reg_index = 0, factor = 1;
         for(int index = 15; index >= 12; index--){ // set register index
             reg_index += factor*this.currentInstruction.getBit(index).getValue();
@@ -281,6 +284,10 @@ public class computer {
             sb.append("MEMORY: " + this.memory.toString());
         }
         System.out.println(sb.toString());
+    }
+
+    protected int[] getPCAndSP(){
+        return new int[]{this.PC.getSigned(), this.SP.getSigned()};
     }
 
     protected int[] getCompareBitValue(){
