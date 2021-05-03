@@ -205,7 +205,7 @@ public class cpu_test3 {
             "and R1 R0 R2",
             "push R1", // SP: 1020 => 1016
             "pop R2", // SP: 1016 => 1020
-            "call 0",
+            "call 0", // SP: 1020 => 0
             "add R0 R1 R3",
             "interrupt 1",
             "halt"
@@ -214,8 +214,8 @@ public class cpu_test3 {
         computer cpu1 = new computer();
         cpu1.preload(assembled_code1); cpu1.run();
         int[] pcsp1 = cpu1.getPCAndSP();
-        System.out.println("Excpeted SP: SP -> 0");
-        System.out.println("Test SP: SP -> " + pcsp1[1]);
+        System.out.println("Excpeted SP: 0");
+        System.out.println("Test SP: " + pcsp1[1]);
         System.out.println("call test1 successed");
         System.out.println("==== CASE 1 END ====\n");
 
@@ -226,8 +226,8 @@ public class cpu_test3 {
             "push R2", // SP: 1020 => 1016
             "move R15 100",
             "push R15", // SP: 1016 => 1012
-            "pop R0", // SP: 1012 => 1016,
-            "call 0",
+            "pop R0", // SP: 1012 => 1016
+            "call 0", // SP: 1016 => 0
             "interrupt 1",
             "halt"
         };
@@ -235,70 +235,77 @@ public class cpu_test3 {
         computer cpu2 = new computer();
         cpu2.preload(assembled_code2); cpu2.run();
         int[] pcsp2 = cpu2.getPCAndSP();
-        System.out.println("Excpeted SP: SP -> 0");
-        System.out.println("Test SP: SP -> " + pcsp2[1]);
+        System.out.println("Excpeted SP: 0");
+        System.out.println("Test SP: " + pcsp2[1]);
         System.out.println("call test2 successed");
         System.out.println("==== CASE 2 END ====\n");
         
-        // // case 3
-        // System.out.println("==== CASE 3 START ====");
-        // String[] test3 = {
-        //     "move R0 127",
-        //     "move R1 -1",
-        //     "push R0", // SP: 1020 => 1016
-        //     "push R1", // SP: 1016 => 1012
-        //     "and R0 R1 R3",
-        //     "push R3", // SP: 1012 => 1008
-        //     "pop R15", // SP: 1008 => 1012
-        //     "interrupt 1",
-        //     "interrupt 0",
-        //     "halt"
-        // };
-        // String[] assembled_code3 = Assembler.assemble(test3);
-        // computer cpu3 = new computer();
-        // cpu3.preload(assembled_code3); cpu3.run();
-        // System.out.println("call test3 successed");
-        // System.out.println("==== CASE 3 END ====\n");
-
-        // // case 4
-        // System.out.println("==== CASE 4 START ====");
-        // String[] test4 = {
-        //     "move R7 2",
-        //     "push R7", // SP: 1020 => 1016
-        //     "move R10 3",
-        //     "push R10", // SP: 1016 => 1012
-        //     "add R7 R10 R0",
-        //     "push R0", // SP: 1012 => 1008
-        //     "pop R2", // SP: 1008 => 1012
-        //     "interrupt 1",
-        //     "interrupt 0",
-        //     "halt"
-        // };
-        // String[] assembled_code4 = Assembler.assemble(test4);
-        // computer cpu4 = new computer();
-        // cpu4.preload(assembled_code4); cpu4.run();
-        // System.out.println("call test4 successed");
-        // System.out.println("==== CASE 4 END ====\n");
+        // case 3
+        System.out.println("==== CASE 3 START ====");
+        String[] test3 = {
+            "move R0 127",
+            "move R1 -1",
+            "push R0", // SP: 1020 => 1016
+            "push R1", // SP: 1016 => 1012
+            "and R0 R1 R3",
+            "push R3", // SP: 1012 => 1008
+            "pop R15", // SP: 1008 => 1012
+            "call 1020", // SP: 1012 => 1020
+            "interrupt 1",
+            "halt"
+        };
+        String[] assembled_code3 = Assembler.assemble(test3);
+        computer cpu3 = new computer();
+        cpu3.preload(assembled_code3); cpu3.run();
+        int[] pcsp3 = cpu3.getPCAndSP();
+        System.out.println("Excpeted SP: 1020");
+        System.out.println("Test SP: " + pcsp3[1]);
+        System.out.println("call test3 successed");
+        System.out.println("==== CASE 3 END ====\n");
         
-        // // case 5
-        // System.out.println("==== CASE 5 START ====");
-        // String[] test5 = {
-        //     "move R1 -1",
-        //     "push R1", // SP: 1020 => 1016
-        //     "move R2 -1",
-        //     "push R2", // SP: 1016 => 1012
-        //     "subtract R1 R2 R0",
-        //     "push R0", // SP: 1012 => 1008
-        //     "pop R15", // SP: 1008 => 1012
-        //     "interrupt 1",
-        //     "interrupt 0",
-        //     "halt"
-        // };
-        // String[] assembled_code5 = Assembler.assemble(test5);
-        // computer cpu5 = new computer();
-        // cpu5.preload(assembled_code5); cpu5.run();
-        // System.out.println("call test5 successed");
-        // System.out.println("==== CASE 5 END ====\n");
+        // case 4
+        System.out.println("==== CASE 4 START ====");
+        String[] test4 = {
+            "move R7 2",
+            "push R7", // SP: 1020 => 1016
+            "move R10 3",
+            "push R10", // SP: 1016 => 1012
+            "add R7 R10 R0",
+            "push R0", // SP: 1012 => 1008
+            "call 0", // SP: 1008 => 0
+            "subtract R15 R14 R13",
+            "interrupt 1",
+            "halt"
+        };
+        String[] assembled_code4 = Assembler.assemble(test4);
+        computer cpu4 = new computer();
+        cpu4.preload(assembled_code4); cpu4.run();
+        int[] pcsp4 = cpu4.getPCAndSP();
+        System.out.println("Excpeted SP: 0");
+        System.out.println("Test SP: " + pcsp4[1]);
+        System.out.println("call test4 successed");
+        System.out.println("==== CASE 4 END ====\n");
+        
+        // case 5
+        System.out.println("==== CASE 5 START ====");
+        String[] test5 = {
+            "move R1 -1",
+            "push R1", // SP: 1020 => 1016
+            "move R2 -1",
+            "push R2", // SP: 1016 => 1012
+            "call 1020", // SP: 1012 => 1020
+            "multiply R1 R2 R0",
+            "interrupt 1",
+            "halt"
+        };
+        String[] assembled_code5 = Assembler.assemble(test5);
+        computer cpu5 = new computer();
+        cpu5.preload(assembled_code5); cpu5.run();
+        int[] pcsp5 = cpu5.getPCAndSP();
+        System.out.println("Excpeted SP: 1020");
+        System.out.println("Test SP: " + pcsp5[1]);
+        System.out.println("call test5 successed");
+        System.out.println("==== CASE 5 END ====\n");
 
         System.out.println("~~~~ TEST \"call\" END ~~~~\n");
     }
@@ -424,7 +431,7 @@ public class cpu_test3 {
         pushTest();
         popTest();
         callTest();
-        // returnTest();
+        returnTest();
     }
     
     public static void main(String[] args) throws Exception{ // main method
