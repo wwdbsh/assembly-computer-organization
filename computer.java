@@ -175,7 +175,7 @@ public class computer {
                 for(int index = 6; index < 16; index++){
                     called_address.setBit(index+16, this.currentInstruction.getBit(index));
                 }
-                this.memory.write(this.SP, rippleAdder.add(this.PC, this.positive_two)); // push addredss of next instruction that PC will return to
+                this.memory.write(this.SP, this.PC); // push addredss of next instruction that PC will return to
                 this.PC.copy(called_address); // move PC to called address
                 this.SP.copy(rippleAdder.add(this.SP, rippleAdder.add(this.positive_four.not(), this.carry))); // stack pointer -= 4
                 break;
@@ -285,10 +285,6 @@ public class computer {
             sb.append("MEMORY: " + this.memory.toString());
         }
         System.out.println(sb.toString());
-    }
-
-    protected int[] getPCAndSP(){
-        return new int[]{this.PC.getSigned(), this.SP.getSigned()};
     }
 
     protected int[] getCompareBitValue(){
