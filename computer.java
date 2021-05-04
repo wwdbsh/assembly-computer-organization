@@ -175,12 +175,13 @@ public class computer {
                 for(int index = 6; index < 16; index++){
                     called_address.setBit(index+16, this.currentInstruction.getBit(index));
                 }
-                this.SP.copy(called_address); // move SP to called address
-                this.memory.write(this.SP, this.memory.read(this.PC)); // next instruction => stack
+                this.memory.write(this.SP, rippleAdder.add(this.PC, this.positive_two)); // push addredss of next instruction that PC will return to
+                this.PC.copy(called_address); // move PC to called address
+                this.SP.copy(rippleAdder.add(this.SP, rippleAdder.add(this.positive_four.not(), this.carry))); // stack pointer -= 4
                 break;
             default: // return (11)
-                this.PC.copy(this.SP); // move PC to SP
                 this.SP.copy(rippleAdder.add(this.SP, this.positive_four)); // stack pointer += 4
+                this.PC.copy(this.memory.read(this.SP)); // pop return address and move PC to return address
         }
     }
 
